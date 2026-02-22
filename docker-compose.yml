@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kyaho_app
+    restart: always
+    environment:
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-kyaho}
+      - DB_PORT=${DB_PORT:-5432}
+      - APP_PORT=${APP_PORT:-3000}
+    networks:
+      - traefik-public
+
+networks:
+  traefik-public:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik-public}
