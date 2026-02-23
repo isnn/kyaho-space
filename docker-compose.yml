@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -16,6 +16,17 @@ services:
       - APP_PORT=${APP_PORT:-3000}
     networks:
       - traefik-public
+
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik-public}
+
+      - traefik.http.routers.kyaho-space-api.rule=Host(`${DOMAIN:-example.com}`)
+      - traefik.http.routers.kyaho-space-api.entrypoints=websecure
+      - traefik.http.routers.kyaho-space-api.tls=true
+      - traefik.http.routers.kyaho-space-api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.routers.kyaho-space-api.service=kyaho-space-api
+      - traefik.http.services.kyaho-space-api.loadbalancer.server.port=${APP_PORT:-3000}
 
 networks:
   traefik-public:
