@@ -14,7 +14,8 @@ func AddJob(service job.Service) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var req entities.JobRequest
 		if err := c.Bind().Body(&req); err != nil {
-			return BadRequestResponse(c, "Invalid request body")
+			return BadRequestResponse(c)
+
 		}
 
 		if errs := ValidateStruct(req); errs != nil {

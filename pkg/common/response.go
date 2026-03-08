@@ -16,11 +16,12 @@ type ErrorBody struct {
 // --- Error Responses ---
 
 // BadRequestResponse returns 400 with a message.
-func BadRequestResponse(c fiber.Ctx, msg string) error {
-	if msg == "" {
-		msg = "Bad Request"
+func BadRequestResponse(c fiber.Ctx, msg ...string) error {
+	message := "Bad Request"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
 	}
-	return c.Status(http.StatusBadRequest).JSON(ErrorBody{Message: msg})
+	return c.Status(http.StatusBadRequest).JSON(ErrorBody{Message: message})
 }
 
 // ValidationErrorResponse returns 400 with a message and field-level details.
@@ -32,45 +33,69 @@ func ValidationErrorResponse(c fiber.Ctx, msg string, details []string) error {
 }
 
 // UnauthorizedResponse returns 401.
-func UnauthorizedResponse(c fiber.Ctx, msg string) error {
-	if msg == "" {
-		msg = "Unauthorized"
+func UnauthorizedResponse(c fiber.Ctx, msg ...string) error {
+	message := "Unauthorized"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
 	}
-	return c.Status(http.StatusUnauthorized).JSON(ErrorBody{Message: msg})
+	return c.Status(http.StatusUnauthorized).JSON(ErrorBody{Message: message})
 }
 
 // ForbiddenResponse returns 403.
-func ForbiddenResponse(c fiber.Ctx, msg string) error {
-	if msg == "" {
-		msg = "Forbidden"
+func ForbiddenResponse(c fiber.Ctx, msg ...string) error {
+	message := "Forbidden"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
 	}
-	return c.Status(http.StatusForbidden).JSON(ErrorBody{Message: msg})
+	return c.Status(http.StatusForbidden).JSON(ErrorBody{Message: message})
 }
 
 // NotFoundResponse returns 404.
-func NotFoundResponse(c fiber.Ctx, msg string) error {
-	if msg == "" {
-		msg = "Not Found"
+func NotFoundResponse(c fiber.Ctx, msg ...string) error {
+	message := "Not Found"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
 	}
-	return c.Status(http.StatusNotFound).JSON(ErrorBody{Message: msg})
+	return c.Status(http.StatusNotFound).JSON(ErrorBody{Message: message})
 }
 
 // InternalErrorResponse returns 500.
-func InternalErrorResponse(c fiber.Ctx, msg string) error {
-	if msg == "" {
-		msg = "Internal Server Error"
+func InternalErrorResponse(c fiber.Ctx, msg ...string) error {
+	message := "Internal Server Error"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
 	}
-	return c.Status(http.StatusInternalServerError).JSON(ErrorBody{Message: msg})
+	return c.Status(http.StatusInternalServerError).JSON(ErrorBody{Message: message})
 }
 
 // --- Success Responses ---
 
+// SuccessBody is the standard success response shape.
+type SuccessBody struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
 // SuccessResponse returns 200 with data.
-func SuccessResponse(c fiber.Ctx, data interface{}) error {
-	return c.Status(http.StatusOK).JSON(data)
+func SuccessResponse(c fiber.Ctx, data interface{}, msg ...string) error {
+	message := "success"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
+	}
+	return c.Status(http.StatusOK).JSON(SuccessBody{
+		Message: message,
+		Data:    data,
+	})
 }
 
 // CreatedResponse returns 201 with data.
-func CreatedResponse(c fiber.Ctx, data interface{}) error {
-	return c.Status(http.StatusCreated).JSON(data)
+func CreatedResponse(c fiber.Ctx, data interface{}, msg ...string) error {
+	message := "success"
+	if len(msg) > 0 && msg[0] != "" {
+		message = msg[0]
+	}
+	return c.Status(http.StatusCreated).JSON(SuccessBody{
+		Message: message,
+		Data:    data,
+	})
 }

@@ -121,7 +121,7 @@ func PutWishlist(service wishlist.Service) fiber.Handler {
 			return InternalErrorResponse(c, "Failed to update wishlist")
 		}
 
-		return SuccessResponse(c, fiber.Map{"message": "Wishlist updated successfully"})
+		return SuccessResponse(c, nil, "Wishlist updated successfully")
 	}
 }
 
@@ -139,6 +139,6 @@ func DeleteWishlist(service wishlist.Service) fiber.Handler {
 			return InternalErrorResponse(c, "Failed to delete wishlist")
 		}
 
-		return SuccessResponse(c, fiber.Map{"message": "Wishlist deleted successfully"})
+		return SuccessResponse(c, nil, "Wishlist deleted successfully")
 	}
 }
