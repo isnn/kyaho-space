@@ -27,7 +27,7 @@ func NewService(r Repository) Service {
 
 func (s *service) AddJob(job *entities.Job) error {
 	if job.Status == "" {
-		job.Status = "Applied"
+		job.Status = "applied"
 	}
 	if job.AppliedDate.IsZero() {
 		job.AppliedDate = time.Now()

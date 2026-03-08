@@ -19,18 +19,14 @@ type repository struct {
 	db *gorm.DB
 }
 
-// NewRepo creates a new job repository
-// Each package gets its own NewRepo — pass the same *gorm.DB to all of them
 func NewRepo(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-// CreateJob inserts a new job record into the database
 func (r *repository) CreateJob(job *entities.Job) error {
 	return r.db.Create(job).Error
 }
 
-// ListJobs fetches all job records from the database
 func (r *repository) ListJobs() ([]entities.Job, error) {
 	var jobs []entities.Job
 	err := r.db.Order("applied_date desc, created_at desc").Find(&jobs).Error
@@ -78,9 +74,9 @@ func (r *repository) GetStatistics() (map[string]interface{}, error) {
 
 	model.Count(&total)
 
-	r.db.Model(&entities.Job{}).Where("status = ?", "Interview").Count(&interview)
-	r.db.Model(&entities.Job{}).Where("status = ?", "Ghosted").Count(&ghosted)
-	r.db.Model(&entities.Job{}).Where("status = ?", "Offer").Count(&offer)
+	r.db.Model(&entities.Job{}).Where("status IN ?", []string{"interview", "Interview"}).Count(&interview)
+	r.db.Model(&entities.Job{}).Where("status IN ?", []string{"ghosted", "Ghosted"}).Count(&ghosted)
+	r.db.Model(&entities.Job{}).Where("status IN ?", []string{"offer", "Offer"}).Count(&offer)
 
 	conversionRate := 0.0
 	if total > 0 {
