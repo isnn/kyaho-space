@@ -22,6 +22,18 @@ func NewService(r Repository) Service {
 }
 
 func (s *service) AddWishlist(w *entities.Wishlist) error {
+	if w.Status == "" {
+		w.Status = "planned"
+	}
+
+	if w.Position == 0 {
+		maxPos, err := s.repository.GetMaxPosition()
+		if err != nil {
+			return err
+		}
+		w.Position = maxPos + 1
+	}
+
 	return s.repository.CreateWishlist(w)
 }
 

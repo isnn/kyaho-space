@@ -1,10 +1,17 @@
 package job
 
-import "kyaho-space/pkg/entities"
+import (
+	"kyaho-space/pkg/entities"
+	"time"
+)
 
 type Service interface {
 	AddJob(job *entities.Job) error
-	GetJob() ([]entities.Job, error)
+	GetJobs() ([]entities.Job, error)
+	GetJobByID(id string) (*entities.Job, error)
+	UpdateJob(job *entities.Job, updates map[string]interface{}) error
+	DeleteJob(id string) error
+	GetStatistics() (map[string]interface{}, error)
 }
 
 type service struct {
@@ -19,9 +26,31 @@ func NewService(r Repository) Service {
 }
 
 func (s *service) AddJob(job *entities.Job) error {
+	if job.Status == "" {
+		job.Status = "Applied"
+	}
+	if job.AppliedDate.IsZero() {
+		job.AppliedDate = time.Now()
+	}
 	return s.repository.CreateJob(job)
 }
 
-func (s *service) GetJob() ([]entities.Job, error) {
-	return s.repository.ReadJob()
+func (s *service) GetJobs() ([]entities.Job, error) {
+	return s.repository.ListJobs()
+}
+
+func (s *service) GetJobByID(id string) (*entities.Job, error) {
+	return s.repository.GetJobByID(id)
+}
+
+func (s *service) UpdateJob(job *entities.Job, updates map[string]interface{}) error {
+	return s.repository.UpdateJob(job, updates)
+}
+
+func (s *service) DeleteJob(id string) error {
+	return s.repository.DeleteJob(id)
+}
+
+func (s *service) GetStatistics() (map[string]interface{}, error) {
+	return s.repository.GetStatistics()
 }

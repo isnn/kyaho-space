@@ -17,31 +17,49 @@ type ErrorBody struct {
 
 // BadRequestResponse returns 400 with a message.
 func BadRequestResponse(c fiber.Ctx, msg string) error {
+	if msg == "" {
+		msg = "Bad Request"
+	}
 	return c.Status(http.StatusBadRequest).JSON(ErrorBody{Message: msg})
 }
 
 // ValidationErrorResponse returns 400 with a message and field-level details.
 func ValidationErrorResponse(c fiber.Ctx, msg string, details []string) error {
+	if msg == "" {
+		msg = "Validation Failed"
+	}
 	return c.Status(http.StatusBadRequest).JSON(ErrorBody{Message: msg, Details: details})
 }
 
 // UnauthorizedResponse returns 401.
 func UnauthorizedResponse(c fiber.Ctx, msg string) error {
+	if msg == "" {
+		msg = "Unauthorized"
+	}
 	return c.Status(http.StatusUnauthorized).JSON(ErrorBody{Message: msg})
 }
 
 // ForbiddenResponse returns 403.
 func ForbiddenResponse(c fiber.Ctx, msg string) error {
+	if msg == "" {
+		msg = "Forbidden"
+	}
 	return c.Status(http.StatusForbidden).JSON(ErrorBody{Message: msg})
 }
 
 // NotFoundResponse returns 404.
 func NotFoundResponse(c fiber.Ctx, msg string) error {
+	if msg == "" {
+		msg = "Not Found"
+	}
 	return c.Status(http.StatusNotFound).JSON(ErrorBody{Message: msg})
 }
 
 // InternalErrorResponse returns 500.
 func InternalErrorResponse(c fiber.Ctx, msg string) error {
+	if msg == "" {
+		msg = "Internal Server Error"
+	}
 	return c.Status(http.StatusInternalServerError).JSON(ErrorBody{Message: msg})
 }
 

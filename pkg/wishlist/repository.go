@@ -21,6 +21,7 @@ type Repository interface {
 	GetWishlistByID(id string) (*entities.Wishlist, error)
 	UpdateWishlist(w *entities.Wishlist, updates map[string]interface{}) error
 	DeleteWishlist(id string) error
+	GetMaxPosition() (int, error)
 }
 
 type repository struct {
@@ -94,4 +95,10 @@ func (r *repository) DeleteWishlist(id string) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func (r *repository) GetMaxPosition() (int, error) {
+	var max int
+	err := r.db.Model(&entities.Wishlist{}).Select("COALESCE(MAX(position), 0)").Scan(&max).Error
+	return max, err
 }

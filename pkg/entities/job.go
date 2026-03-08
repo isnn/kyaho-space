@@ -8,27 +8,23 @@ import (
 )
 
 type Job struct {
-	ID                   string    `json:"id" gorm:"type:uuid;primaryKey"`
-	UserID               string    `json:"user_id"`
-	CompanyName          string    `json:"company_name"`
-	JobTitle             string    `json:"job_title"`
-	JobPostURL           string    `json:"job_post_url"`
-	RecruitmentPortalURL string    `json:"recruitment_portal_url"`
-	Status               string    `json:"status"`
-	AppliedDate          time.Time `json:"applied_date"`
-	LastUpdated          time.Time `json:"last_updated"`
-	Notes                string    `json:"notes"`
+	ID          string    `json:"id" gorm:"type:uuid;primaryKey"`
+	UserID      string    `json:"user_id"`
+	CompanyName string    `json:"company_name"`
+	JobTitle    string    `json:"job_title"`
+	JobPostURL  string    `json:"job_post_url"`
+	Status      string    `json:"status"`
+	AppliedDate time.Time `json:"applied_date"`
+	Notes       string    `json:"notes"`
 
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
-// TableName sets the table name for GORM
 func (Job) TableName() string {
 	return "jobs"
 }
 
-// BeforeCreate generates a UUID before inserting into the database
 func (j *Job) BeforeCreate(tx *gorm.DB) error {
 	if j.ID == "" {
 		j.ID = uuid.New().String()
@@ -37,6 +33,17 @@ func (j *Job) BeforeCreate(tx *gorm.DB) error {
 }
 
 type JobRequest struct {
-	CompanyName string `json:"company_name"`
-	JobTitle    string `json:"job_title"`
+	CompanyName string `json:"company_name" validate:"required,min=1"`
+	JobTitle    string `json:"job_title" validate:"required,min=1"`
+	JobPostURL  string `json:"job_post_url" validate:"omitempty"`
+	Status      string `json:"status" validate:"omitempty,oneof=applied technical interview offer rejected ghosted"`
+	Notes       string `json:"notes" validate:"omitempty"`
+}
+
+type JobUpdateRequest struct {
+	CompanyName *string `json:"company_name" validate:"omitempty,min=1"`
+	JobTitle    *string `json:"job_title" validate:"omitempty,min=1"`
+	JobPostURL  *string `json:"job_post_url" validate:"omitempty"`
+	Status      *string `json:"status" validate:"omitempty,oneof=applied technical interview offer rejected ghosted"`
+	Notes       *string `json:"notes" validate:"omitempty"`
 }

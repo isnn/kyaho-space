@@ -24,6 +24,8 @@ func CreateWishlist(service wishlist.Service) fiber.Handler {
 		w := entities.Wishlist{
 			TargetAction: req.TargetAction,
 			TargetYear:   req.TargetYear,
+			Position:     req.Position,
+			Status:       req.Status,
 		}
 
 		if err := service.AddWishlist(&w); err != nil {
@@ -95,6 +97,16 @@ func PutWishlist(service wishlist.Service) fiber.Handler {
 		}
 		if req.TargetYear != nil {
 			updates["target_year"] = *req.TargetYear
+		}
+		if req.Position != nil {
+			updates["position"] = *req.Position
+		}
+		if req.Status != nil {
+			status := *req.Status
+			if status == "" {
+				status = "planned"
+			}
+			updates["status"] = status
 		}
 
 		if len(updates) == 0 {
