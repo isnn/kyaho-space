@@ -8,6 +8,8 @@ import (
 	"kyaho-space/pkg/entities"
 	"kyaho-space/pkg/job"
 	"kyaho-space/pkg/meet_plan"
+	"kyaho-space/pkg/middleware"
+	"kyaho-space/pkg/user"
 	"kyaho-space/pkg/wishlist"
 	"time"
 
@@ -16,19 +18,17 @@ import (
 )
 
 func main() {
-	// Load configuration from .env
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		panic(fmt.Sprintf("Failed to load config: %v", err))
 	}
 
-	// Initialize global DB connection (database.DB is now available everywhere)
 	database.OpenConnection(cfg)
 
-	// Auto-migrate all models
 	database.MigrateSchema(&entities.Job{})
 	database.MigrateSchema(&entities.MeetPlan{})
 	database.MigrateSchema(&entities.Wishlist{})
+	database.MigrateSchema(&entities.User{})
 
 	// Setup Fiber app
 	app := fiber.New(fiber.Config{
@@ -38,18 +38,30 @@ func main() {
 	})
 	app.Use(cors.New())
 
-	// Setup routes — each package gets its own repo with the shared DB
 	api := app.Group("/api")
+
+	// --- PUBLIC ROUTES ---
+
+	// Auth
+	userRepo := user.NewRepo(database.DB)
+	userService := user.NewService(userRepo)
+	routes.AuthRouter(api, userService, cfg.JWTSecret)
+
+	// --- AUTH MIDDLEWARE ---
+	authMiddleware := middleware.JWTAuth(cfg.JWTSecret)
+
+	// MeetPlan
+	meetPlanRepo := meet_plan.NewRepo(database.DB)
+	meetPlanService := meet_plan.NewService(meetPlanRepo)
+	routes.MeetPlanRouter(api, meetPlanService, authMiddleware)
+
+	// --- PROTECTED ROUTES ---
+	api.Use(authMiddleware)
 
 	// Job
 	jobRepo := job.NewRepo(database.DB)
 	jobService := job.NewService(jobRepo)
 	routes.JobRouter(api, jobService)
-
-	// MeetPlan
-	meetPlanRepo := meet_plan.NewRepo(database.DB)
-	meetPlanService := meet_plan.NewService(meetPlanRepo)
-	routes.MeetPlanRouter(api, meetPlanService)
 
 	// Wishlist
 	wishlistRepo := wishlist.NewRepo(database.DB)

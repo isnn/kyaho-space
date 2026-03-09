@@ -16,6 +16,7 @@ type Config struct {
 	DBSSLMode  string
 	DBTimeZone string
 	AppPort    string
+	JWTSecret  string
 }
 
 // LoadConfig reads .env file and returns a Config struct
@@ -34,6 +35,7 @@ func LoadConfig() (Config, error) {
 		AppPort:    getEnv("APP_PORT", "3000"),
 		DBSSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		DBTimeZone: getEnv("DB_TIMEZONE", "Asia/Shanghai"),
+		JWTSecret:  getEnv("JWT_SECRET", "secret-key"),
 	}
 
 	return cfg, nil
