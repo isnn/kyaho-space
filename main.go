@@ -36,7 +36,14 @@ func main() {
 		WriteTimeout: time.Second * 5,
 		ReadTimeout:  time.Second * 5,
 	})
-	app.Use(cors.New())
+
+	// CORS configuration
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{cfg.FrontendURL},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	api := app.Group("/api")
 
@@ -45,7 +52,7 @@ func main() {
 	// Auth
 	userRepo := user.NewRepo(database.DB)
 	userService := user.NewService(userRepo)
-	routes.AuthRouter(api, userService, cfg.JWTSecret)
+	routes.AuthRouter(api, userService, cfg.JWTSecret, cfg.Env)
 
 	// --- AUTH MIDDLEWARE ---
 	authMiddleware := middleware.JWTAuth(cfg.JWTSecret)

@@ -29,7 +29,7 @@ func Signup(service user.Service) fiber.Handler {
 	}
 }
 
-func Login(service user.Service, jwtSecret string) fiber.Handler {
+func Login(service user.Service, jwtSecret string, env string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var req entities.LoginRequest
 		if err := c.Bind().Body(&req); err != nil {
@@ -49,10 +49,14 @@ func Login(service user.Service, jwtSecret string) fiber.Handler {
 			Name:     "refresh_token",
 			Value:    refreshToken,
 			HTTPOnly: true,
-			Secure:   false,
+			Secure:   env == "production",
 			SameSite: fiber.CookieSameSiteLaxMode,
 			MaxAge:   int((7 * 24 * time.Hour).Seconds()),
 			Path:     "/",
+		}
+
+		if env == "production" {
+			cookie.SameSite = fiber.CookieSameSiteNoneMode
 		}
 		c.Cookie(cookie)
 
@@ -94,6 +98,8 @@ func Logout(service user.Service) fiber.Handler {
 			Value:    "",
 			Expires:  time.Now().Add(-time.Hour),
 			HTTPOnly: true,
+			Secure:   true, // Set to true for deletion robustness
+			SameSite: fiber.CookieSameSiteNoneMode,
 			Path:     "/",
 		}
 		c.Cookie(cookie)
