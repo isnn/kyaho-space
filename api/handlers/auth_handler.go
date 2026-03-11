@@ -66,7 +66,7 @@ func Login(service user.Service, jwtSecret string, env string) fiber.Handler {
 	}
 }
 
-func Refresh(service user.Service, jwtSecret string) fiber.Handler {
+func Refresh(service user.Service, jwtSecret string, env string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		refreshTokenOld := c.Cookies("refresh_token")
 
@@ -74,13 +74,29 @@ func Refresh(service user.Service, jwtSecret string) fiber.Handler {
 			return UnauthorizedResponse(c, "Missing refresh token")
 		}
 
-		newAccessToken, err := service.RefreshToken(refreshTokenOld, jwtSecret)
+		newAccessToken, newRefreshToken, err := service.RefreshToken(refreshTokenOld, jwtSecret)
 		if err != nil {
 			return UnauthorizedResponse(c, err.Error())
 		}
 
-		return SuccessResponse(c, entities.AuthRefreshResponse{
-			RefreshToken: newAccessToken,
+		// Set NEW refresh token as HTTP-only cookie (7 days) - Rotation
+		cookie := &fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    newRefreshToken,
+			HTTPOnly: true,
+			Secure:   env == "production",
+			SameSite: fiber.CookieSameSiteLaxMode,
+			MaxAge:   int((7 * 24 * time.Hour).Seconds()),
+			Path:     "/",
+		}
+
+		if env == "production" {
+			cookie.SameSite = fiber.CookieSameSiteNoneMode
+		}
+		c.Cookie(cookie)
+
+		return SuccessResponse(c, entities.AuthLoginResponse{
+			AccessToken: newAccessToken,
 		})
 	}
 }

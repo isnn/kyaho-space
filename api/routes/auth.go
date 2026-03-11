@@ -12,6 +12,6 @@ func AuthRouter(api fiber.Router, service user.Service, jwtSecret string, env st
 
 	auth.Post("/signup", handlers.Signup(service))
 	auth.Post("/login", handlers.Login(service, jwtSecret, env))
-	auth.Post("/refresh", handlers.Refresh(service, jwtSecret))
+	auth.Post("/refresh", handlers.Refresh(service, jwtSecret, env))
 	auth.Post("/logout", handlers.Logout(service))
 }

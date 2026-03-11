@@ -14,7 +14,7 @@ import (
 type Service interface {
 	Register(req entities.SignupRequest) (*entities.User, error)
 	Login(req entities.LoginRequest, secret string) (accessToken string, refreshToken string, err error)
-	RefreshToken(refreshToken string, secret string) (newAccessToken string, err error)
+	RefreshToken(refreshToken string, secret string) (newAccessToken string, newRefreshToken string, err error)
 	Logout(refreshToken string) error
 }
 
@@ -99,31 +99,39 @@ func (s *service) Login(req entities.LoginRequest, secret string) (string, strin
 	return accessToken, refreshToken, nil
 }
 
-// RefreshToken validates a refresh token against DB and issues a new access token.
-func (s *service) RefreshToken(refreshToken string, secret string) (string, error) {
+// RefreshToken validates a refresh token, rotates it, and issues a new pair of tokens.
+func (s *service) RefreshToken(refreshToken string, secret string) (string, string, error) {
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(refreshToken, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil || !token.Valid {
-		return "", errors.New("invalid or expired refresh token")
+		return "", "", errors.New("invalid or expired refresh token")
 	}
 
 	userID, ok := claims["user_id"].(string)
 	if !ok || userID == "" {
-		return "", errors.New("invalid refresh token")
+		return "", "", errors.New("invalid refresh token")
 	}
 
-	user, err := s.repository.FindByToken(refreshToken)
-	if err != nil || user.ID != userID {
-		return "", errors.New("refresh token not recognized")
-	}
-	newAccess, err := generateToken(userID, secret, 7*24*time.Hour)
+	// Issue new access token (15 minutes)
+	newAccess, err := generateToken(userID, secret, 15*time.Minute)
 	if err != nil {
-		return "", errors.New("failed to generate access token")
+		return "", "", errors.New("failed to generate access token")
 	}
 
-	return newAccess, nil
+	// Issue new refresh token (7 days) - This is the "Rotation"
+	newRefresh, err := generateToken(userID, secret, 7*24*time.Hour)
+	if err != nil {
+		return "", "", errors.New("failed to generate refresh token")
+	}
+
+	// Persist the NEW refresh token in DB
+	if err := s.repository.UpdateToken(userID, newRefresh); err != nil {
+		return "", "", errors.New("failed to update refresh token")
+	}
+
+	return newAccess, newRefresh, nil
 }
 
 func (s *service) Logout(refreshToken string) error {
