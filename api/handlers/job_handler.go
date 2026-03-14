@@ -4,6 +4,7 @@ import (
 	. "kyaho-space/pkg/common"
 	"kyaho-space/pkg/entities"
 	"kyaho-space/pkg/job"
+	"strconv"
 
 	"gorm.io/gorm"
 
@@ -40,12 +41,23 @@ func AddJob(service job.Service) fiber.Handler {
 
 func GetJobs(service job.Service) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		jobs, err := service.GetJobs()
+		page, _ := strconv.Atoi(c.Query("page", "1"))
+		limit, _ := strconv.Atoi(c.Query("limit", "10"))
+
+		params := ListParams{
+			Page:   page,
+			Limit:  limit,
+			Search: c.Query("search", ""),
+			SortBy: c.Query("sort_by", "applied_date"),
+			Order:  c.Query("order", "desc"),
+		}
+
+		jobs, total, err := service.GetJobs(params)
 		if err != nil {
 			return InternalErrorResponse(c, "Failed to retrieve jobs")
 		}
 
-		return SuccessResponse(c, jobs)
+		return SuccessResponse(c, NewPaginatedResponse(params, total, jobs))
 	}
 }
 

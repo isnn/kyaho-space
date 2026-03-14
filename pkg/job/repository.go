@@ -1,14 +1,24 @@
 package job
 
 import (
+	"kyaho-space/pkg/common"
 	"kyaho-space/pkg/entities"
 
 	"gorm.io/gorm"
 )
 
+// allowedSortColumns defines which columns can be sorted for jobs
+var allowedSortColumns = map[string]bool{
+	"company_name": true,
+	"job_title":    true,
+	"status":       true,
+	"applied_date": true,
+	"created_at":   true,
+}
+
 type Repository interface {
 	CreateJob(job *entities.Job) error
-	ListJobs() ([]entities.Job, error)
+	ListJobs(params common.ListParams) ([]entities.Job, int64, error)
 	GetJobByID(id string) (*entities.Job, error)
 	UpdateJob(job *entities.Job, updates map[string]interface{}) error
 	DeleteJob(id string) error
@@ -27,10 +37,26 @@ func (r *repository) CreateJob(job *entities.Job) error {
 	return r.db.Create(job).Error
 }
 
-func (r *repository) ListJobs() ([]entities.Job, error) {
+func (r *repository) ListJobs(params common.ListParams) ([]entities.Job, int64, error) {
+	params.Sanitize(allowedSortColumns, "applied_date")
+
+	query := r.db.Model(&entities.Job{})
+
+	// Search: ILIKE on company_name or job_title
+	if params.Search != "" {
+		query = query.Where("company_name ILIKE ? OR job_title ILIKE ?", "%"+params.Search+"%", "%"+params.Search+"%")
+	}
+
+	// Count total (before pagination)
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Sort + Paginate
 	var jobs []entities.Job
-	err := r.db.Order("applied_date desc, created_at desc").Find(&jobs).Error
-	return jobs, err
+	err := query.Order(params.OrderClause()).Limit(params.Limit).Offset(params.Offset()).Find(&jobs).Error
+	return jobs, total, err
 }
 
 func (r *repository) GetJobByID(id string) (*entities.Job, error) {

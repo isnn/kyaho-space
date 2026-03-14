@@ -1,13 +1,14 @@
 package job
 
 import (
+	"kyaho-space/pkg/common"
 	"kyaho-space/pkg/entities"
 	"time"
 )
 
 type Service interface {
 	AddJob(job *entities.Job) error
-	GetJobs() ([]entities.Job, error)
+	GetJobs(params common.ListParams) ([]entities.Job, int64, error)
 	GetJobByID(id string) (*entities.Job, error)
 	UpdateJob(job *entities.Job, updates map[string]interface{}) error
 	DeleteJob(id string) error
@@ -35,8 +36,8 @@ func (s *service) AddJob(job *entities.Job) error {
 	return s.repository.CreateJob(job)
 }
 
-func (s *service) GetJobs() ([]entities.Job, error) {
-	return s.repository.ListJobs()
+func (s *service) GetJobs(params common.ListParams) ([]entities.Job, int64, error) {
+	return s.repository.ListJobs(params)
 }
 
 func (s *service) GetJobByID(id string) (*entities.Job, error) {
