@@ -37,13 +37,24 @@ func main() {
 		ReadTimeout:  time.Second * 5,
 	})
 
-	// CORS configuration
-	app.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{cfg.FrontendURL},
+	// Configure CORS based on Environment
+	corsConfig := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		AllowCredentials: true,
-	}))
+	}
+
+	if cfg.Env == "development" {
+		corsConfig.AllowOrigins = []string{
+			"http://localhost:3000",
+			"http://127.0.0.1:3000",
+			cfg.FrontendURL,
+		}
+	} else {
+		corsConfig.AllowOrigins = []string{cfg.FrontendURL}
+	}
+
+	app.Use(cors.New(corsConfig))
 
 	api := app.Group("/api")
 

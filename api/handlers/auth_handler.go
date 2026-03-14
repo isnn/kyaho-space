@@ -49,17 +49,18 @@ func Login(service user.Service, jwtSecret string, env string) fiber.Handler {
 			Name:     "refresh_token",
 			Value:    refreshToken,
 			HTTPOnly: true,
-			// Secure:   env == "production",
-			// SameSite: fiber.CookieSameSiteLaxMode,
-			Secure:   true,
-			SameSite: fiber.CookieSameSiteNoneMode,
 			MaxAge:   int((7 * 24 * time.Hour).Seconds()),
 			Path:     "/",
 		}
 
 		if env == "production" {
+			cookie.Secure = true
 			cookie.SameSite = fiber.CookieSameSiteNoneMode
+		} else {
+			cookie.Secure = false
+			cookie.SameSite = fiber.CookieSameSiteLaxMode
 		}
+
 		c.Cookie(cookie)
 
 		return SuccessResponse(c, entities.AuthLoginResponse{
@@ -86,17 +87,18 @@ func Refresh(service user.Service, jwtSecret string, env string) fiber.Handler {
 			Name:     "refresh_token",
 			Value:    newRefreshToken,
 			HTTPOnly: true,
-			// Secure:   env == "production",
-			// SameSite: fiber.CookieSameSiteLaxMode,
-			Secure:   true,
-			SameSite: fiber.CookieSameSiteNoneMode,
 			MaxAge:   int((7 * 24 * time.Hour).Seconds()),
 			Path:     "/",
 		}
 
 		if env == "production" {
+			cookie.Secure = true
 			cookie.SameSite = fiber.CookieSameSiteNoneMode
+		} else {
+			cookie.Secure = false
+			cookie.SameSite = fiber.CookieSameSiteLaxMode
 		}
+
 		c.Cookie(cookie)
 
 		return SuccessResponse(c, entities.AuthLoginResponse{
