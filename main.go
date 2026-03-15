@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 func main() {
@@ -37,28 +36,9 @@ func main() {
 		ReadTimeout:  time.Second * 5,
 	})
 
-	// Configure CORS based on Environment
-	corsConfig := cors.Config{
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
-		AllowCredentials: true,
-	}
-
-	if cfg.Env == "development" {
-		corsConfig.AllowOrigins = []string{
-			"http://localhost:3000",
-			"http://127.0.0.1:3000",
-			cfg.FrontendURL,
-		}
-	} else {
-		corsConfig.AllowOrigins = []string{cfg.FrontendURL}
-	}
-
-	app.Use(cors.New(corsConfig))
+	app.Use(middleware.CorsSetup(cfg))
 
 	api := app.Group("/api")
-
-	// --- PUBLIC ROUTES ---
 
 	// Auth
 	userRepo := user.NewRepo(database.DB)
