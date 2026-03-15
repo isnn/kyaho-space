@@ -18,11 +18,11 @@ var allowedSortColumns = map[string]bool{
 
 type Repository interface {
 	CreateJob(job *entities.Job) error
-	ListJobs(params common.ListParams) ([]entities.Job, int64, error)
-	GetJobByID(id string) (*entities.Job, error)
-	UpdateJob(job *entities.Job, updates map[string]interface{}) error
-	DeleteJob(id string) error
-	GetStatistics() (map[string]interface{}, error)
+	ListJobs(params common.ListParams, userID string) ([]entities.Job, int64, error)
+	GetJobByID(id string, userID string) (*entities.Job, error)
+	UpdateJob(job *entities.Job, updates map[string]interface{}, userID string) error
+	DeleteJob(id string, userID string) error
+	GetStatistics(userID string) (map[string]interface{}, error)
 }
 
 type repository struct {
@@ -37,10 +37,10 @@ func (r *repository) CreateJob(job *entities.Job) error {
 	return r.db.Create(job).Error
 }
 
-func (r *repository) ListJobs(params common.ListParams) ([]entities.Job, int64, error) {
+func (r *repository) ListJobs(params common.ListParams, userID string) ([]entities.Job, int64, error) {
 	params.Sanitize(allowedSortColumns, "applied_date")
 
-	query := r.db.Model(&entities.Job{})
+	query := r.db.Model(&entities.Job{}).Where("user_id = ?", userID)
 
 	// Search: ILIKE on company_name or job_title
 	if params.Search != "" {
@@ -59,17 +59,17 @@ func (r *repository) ListJobs(params common.ListParams) ([]entities.Job, int64, 
 	return jobs, total, err
 }
 
-func (r *repository) GetJobByID(id string) (*entities.Job, error) {
+func (r *repository) GetJobByID(id string, userID string) (*entities.Job, error) {
 	var job entities.Job
-	err := r.db.Where("id = ?", id).First(&job).Error
+	err := r.db.Where("id = ? AND user_id = ?", id, userID).First(&job).Error
 	if err != nil {
 		return nil, err
 	}
 	return &job, nil
 }
 
-func (r *repository) UpdateJob(job *entities.Job, updates map[string]interface{}) error {
-	result := r.db.Model(job).Updates(updates)
+func (r *repository) UpdateJob(job *entities.Job, updates map[string]interface{}, userID string) error {
+	result := r.db.Model(job).Where("user_id = ?", userID).Updates(updates)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -79,8 +79,8 @@ func (r *repository) UpdateJob(job *entities.Job, updates map[string]interface{}
 	return nil
 }
 
-func (r *repository) DeleteJob(id string) error {
-	result := r.db.Delete(&entities.Job{}, "id = ?", id)
+func (r *repository) DeleteJob(id string, userID string) error {
+	result := r.db.Delete(&entities.Job{}, "id = ? AND user_id = ?", id, userID)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -90,19 +90,19 @@ func (r *repository) DeleteJob(id string) error {
 	return nil
 }
 
-func (r *repository) GetStatistics() (map[string]interface{}, error) {
+func (r *repository) GetStatistics(userID string) (map[string]interface{}, error) {
 	var total int64
 	var interview int64
 	var ghosted int64
 	var offer int64
 
-	model := r.db.Model(&entities.Job{})
+	model := r.db.Model(&entities.Job{}).Where("user_id = ?", userID)
 
 	model.Count(&total)
 
-	r.db.Model(&entities.Job{}).Where("status IN ?", []string{"interview", "Interview"}).Count(&interview)
-	r.db.Model(&entities.Job{}).Where("status IN ?", []string{"ghosted", "Ghosted"}).Count(&ghosted)
-	r.db.Model(&entities.Job{}).Where("status IN ?", []string{"offer", "Offer"}).Count(&offer)
+	r.db.Model(&entities.Job{}).Where("user_id = ? AND status IN ?", userID, []string{"interview", "Interview"}).Count(&interview)
+	r.db.Model(&entities.Job{}).Where("user_id = ? AND status IN ?", userID, []string{"ghosted", "Ghosted"}).Count(&ghosted)
+	r.db.Model(&entities.Job{}).Where("user_id = ? AND status IN ?", userID, []string{"offer", "Offer"}).Count(&offer)
 
 	conversionRate := 0.0
 	if total > 0 {

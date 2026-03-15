@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	CreateMeetPlan(meetPlan *entities.MeetPlan) error
 	ListMeetPlans() ([]entities.MeetPlan, error)
+	DeleteMeetPlan(id string) error
 }
 
 type repository struct {
@@ -31,4 +32,15 @@ func (r *repository) ListMeetPlans() ([]entities.MeetPlan, error) {
 	var meetPlans []entities.MeetPlan
 	err := r.db.Order("created_at desc").Limit(100).Find(&meetPlans).Error
 	return meetPlans, err
+}
+
+func (r *repository) DeleteMeetPlan(id string) error {
+	result := r.db.Delete(&entities.MeetPlan{}, "id = ?", id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

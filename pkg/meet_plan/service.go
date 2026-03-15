@@ -5,6 +5,7 @@ import "kyaho-space/pkg/entities"
 type Service interface {
 	AddMeetPlan(meetPlan *entities.MeetPlan) error
 	GetMeetPlans() ([]entities.MeetPlan, error)
+	DeleteMeetPlan(id string) error
 }
 
 type service struct {
@@ -24,4 +25,8 @@ func (s *service) AddMeetPlan(meetPlan *entities.MeetPlan) error {
 
 func (s *service) GetMeetPlans() ([]entities.MeetPlan, error) {
 	return s.repository.ListMeetPlans()
+}
+
+func (s *service) DeleteMeetPlan(id string) error {
+	return s.repository.DeleteMeetPlan(id)
 }

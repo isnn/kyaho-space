@@ -6,6 +6,7 @@ import (
 	"kyaho-space/pkg/meet_plan"
 
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 func CreateMeetPlan(service meet_plan.Service) fiber.Handler {
@@ -42,5 +43,23 @@ func ListMeetPlans(service meet_plan.Service) fiber.Handler {
 		}
 
 		return SuccessResponse(c, meetPlans)
+	}
+}
+
+func DeleteMeetPlan(service meet_plan.Service) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		id := c.Params("id")
+		if id == "" {
+			return BadRequestResponse(c, "Meeting plan ID is required")
+		}
+
+		if err := service.DeleteMeetPlan(id); err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return NotFoundResponse(c, "Meeting plan not found")
+			}
+			return InternalErrorResponse(c, "Failed to delete meeting plan")
+		}
+
+		return SuccessResponse(c, nil, "Meeting plan deleted successfully")
 	}
 }

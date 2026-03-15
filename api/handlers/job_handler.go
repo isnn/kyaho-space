@@ -23,7 +23,10 @@ func AddJob(service job.Service) fiber.Handler {
 			return ValidationErrorResponse(c, "Bad Request", errs)
 		}
 
+		userID, _ := c.Locals("user_id").(string)
+
 		newJob := entities.Job{
+			UserID:      userID,
 			CompanyName: req.CompanyName,
 			JobTitle:    req.JobTitle,
 			JobPostURL:  req.JobPostURL,
@@ -43,6 +46,7 @@ func GetJobs(service job.Service) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		page, _ := strconv.Atoi(c.Query("page", "1"))
 		limit, _ := strconv.Atoi(c.Query("limit", "10"))
+		userID, _ := c.Locals("user_id").(string)
 
 		params := ListParams{
 			Page:   page,
@@ -52,7 +56,7 @@ func GetJobs(service job.Service) fiber.Handler {
 			Order:  c.Query("order", "desc"),
 		}
 
-		jobs, total, err := service.GetJobs(params)
+		jobs, total, err := service.GetJobs(params, userID)
 		if err != nil {
 			return InternalErrorResponse(c, "Failed to retrieve jobs")
 		}
@@ -67,8 +71,9 @@ func GetJobDetail(service job.Service) fiber.Handler {
 		if id == "" {
 			return BadRequestResponse(c, "Job ID is required")
 		}
+		userID, _ := c.Locals("user_id").(string)
 
-		j, err := service.GetJobByID(id)
+		j, err := service.GetJobByID(id, userID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				return NotFoundResponse(c, "Job not found")
@@ -86,6 +91,7 @@ func UpdateJob(service job.Service) fiber.Handler {
 		if id == "" {
 			return BadRequestResponse(c, "Job ID is required")
 		}
+		userID, _ := c.Locals("user_id").(string)
 
 		var req entities.JobUpdateRequest
 		if err := c.Bind().Body(&req); err != nil {
@@ -118,7 +124,7 @@ func UpdateJob(service job.Service) fiber.Handler {
 		}
 
 		j := entities.Job{ID: id}
-		if err := service.UpdateJob(&j, updates); err != nil {
+		if err := service.UpdateJob(&j, updates, userID); err != nil {
 			if err == gorm.ErrRecordNotFound {
 				return NotFoundResponse(c, "Job not found")
 			}
@@ -135,8 +141,9 @@ func DeleteJob(service job.Service) fiber.Handler {
 		if id == "" {
 			return BadRequestResponse(c, "Job ID is required")
 		}
+		userID, _ := c.Locals("user_id").(string)
 
-		if err := service.DeleteJob(id); err != nil {
+		if err := service.DeleteJob(id, userID); err != nil {
 			if err == gorm.ErrRecordNotFound {
 				return NotFoundResponse(c, "Job not found")
 			}
@@ -149,7 +156,8 @@ func DeleteJob(service job.Service) fiber.Handler {
 
 func GetJobStatistics(service job.Service) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		stats, err := service.GetStatistics()
+		userID, _ := c.Locals("user_id").(string)
+		stats, err := service.GetStatistics(userID)
 		if err != nil {
 			return InternalErrorResponse(c, "Failed to retrieve job statistics")
 		}
